@@ -3,10 +3,11 @@ const bcrypt = require('bcrypt');
 const _ = require('underscore');
 
 const User = require('../models/user');
+const { verifyToken, verifyAdminRole } = require('../middlewares/authentication');
 
 const app = express();
 
-app.get('/users', (req, res) => {
+app.get('/users', verifyToken, (req, res) => {
 
     let from = req.query.from || 0;
     let perPage = req.query.perPage || 5;
@@ -35,7 +36,7 @@ app.get('/users', (req, res) => {
     });
 });
 
-app.get('/users/:id', (req, res) => {
+app.get('/users/:id', verifyToken, (req, res) => {
     let id = req.params.id;
 
     User.findById(id, (err, user) => {
@@ -62,7 +63,7 @@ app.get('/users/:id', (req, res) => {
     });
 });
 
-app.post('/users', (req, res) => {
+app.post('/users', [verifyToken, verifyAdminRole], (req, res) => {
     let body = req.body;
     let user = new User({
         name: body.name,
@@ -86,7 +87,7 @@ app.post('/users', (req, res) => {
     });
 });
 
-app.put('/users/:id', (req, res) => {
+app.put('/users/:id', [verifyToken, verifyAdminRole], (req, res) => {
     let id = req.params.id;
     let body = _.pick(req.body, 'name', 'email', 'img', 'role', 'isActive');
 
@@ -105,7 +106,7 @@ app.put('/users/:id', (req, res) => {
     });
 });
 
-app.delete('/users/:id', (req, res) => {
+app.delete('/users/:id', [verifyToken, verifyAdminRole], (req, res) => {
     let id = req.params.id;
     User.findByIdAndUpdate(id, { isActive: false },  { new: true, context: 'query' }, (err, user) => {
         if (err) {
